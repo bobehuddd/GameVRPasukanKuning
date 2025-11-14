@@ -23,7 +23,7 @@ public class SteeringWheelControll : MonoBehaviour
 
     public Transform[] snappPositions;
 
-    private int numberOfHandOnWheel = 0; // Not used in the provided code, but kept
+    //private int numberOfHandOnWheel = 0; // Not used in the provided code, but kept
 
     //Object to controll with steeringwheel
     public GameObject Vehicle;
