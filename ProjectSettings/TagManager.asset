@@ -8,6 +8,8 @@ TagManager:
   - Swim
   - Drown
   - SeaCurrent
+  - Camera0
+  - PlayerHand
   layers:
   - Default
   - TransparentFX
@@ -16,7 +18,7 @@ TagManager:
   - Water
   - UI
   - WalkDrive
-  - 
+  - UI Collider
   - 
   - 
   - 
