@@ -1,40 +1,52 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Diperlukan untuk SceneManager
-using UnityEngine.UI; // Opsional, jika Anda perlu mengakses komponen UI
+using UnityEngine.SceneManagement;
 
 public class MenuController : MonoBehaviour
 {
     [Header("Pengaturan Scene")]
-    [Tooltip("Nama scene yang akan dituju")]
-    public string targetSceneName = "Kelas Archimedes";
+    [Tooltip("Nama scene tujuan (harus sama persis dengan nama di Build Settings)")]
+    [SerializeField] private string targetSceneName = "KelasArchimedes";
 
-    // Fungsi yang dipanggil oleh tombol atas ("Scene Kelas Archimedes")
+    [Header("Root Main Menu (opsional)")]
+    [Tooltip("Root canvas / panel main menu. Akan di-nonaktifkan saat pindah scene.")]
+    [SerializeField] private GameObject mainMenuRoot;
+
+    private bool isLoading = false;
+
+    // Dipanggil oleh tombol atas: "Scene Kelas Archimedes"
     public void LoadArchimedesScene()
     {
-        Debug.Log("Mencoba memuat scene: " + targetSceneName);
+        if (isLoading) return; // cegah double klik
+        isLoading = true;
 
-        // Pastikan scene sudah ditambahkan ke Build Settings (File > Build Settings)
-        try
+        if (string.IsNullOrEmpty(targetSceneName))
         {
-            SceneManager.LoadScene(targetSceneName);
+            Debug.LogError("[MenuController] targetSceneName kosong!");
+            isLoading = false;
+            return;
         }
-        catch (System.Exception e)
+
+        Debug.Log("[MenuController] Mencoba memuat scene: " + targetSceneName);
+
+        // Matikan UI main menu jika ada
+        if (mainMenuRoot != null)
         {
-            Debug.LogError("Gagal memuat scene '" + targetSceneName + "'. Pastikan nama scene benar dan ada di Build Settings. Error: " + e.Message);
+            mainMenuRoot.SetActive(false);
         }
+
+        // Pastikan nama scene sudah ada di File > Build Settings
+        SceneManager.LoadSceneAsync(targetSceneName, LoadSceneMode.Single);
     }
 
-    // Fungsi yang dipanggil oleh tombol bawah ("Exit Game")
+    // Dipanggil oleh tombol bawah: "Exit Game"
     public void QuitGame()
     {
-        Debug.Log("Mencoba keluar dari aplikasi...");
+        Debug.Log("[MenuController] Mencoba keluar dari aplikasi...");
 
 #if UNITY_EDITOR
-        // Berfungsi untuk menghentikan pemutaran di Unity Editor
-        UnityEditor.EditorApplication.isPlaying = false;
+        UnityEditor.EditorApplication.isPlaying = false;   // stop Play di Editor
 #else
-            // Berfungsi untuk keluar dari aplikasi yang sudah di-build (PC/APK)
-            Application.Quit();
+        Application.Quit();                                // keluar di build (PC / APK)
 #endif
     }
 }

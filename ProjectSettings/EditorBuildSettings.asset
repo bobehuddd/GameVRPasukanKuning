@@ -6,17 +6,25 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Result/MainMenu.unity
-    guid: 86b89e3da3c16b74ba6320dceadb0686
+    path: Assets/Scenes/MainMenu.unity
+    guid: 3584839e3174b2e48a1d8c36c5f5c1d6
   - enabled: 1
-    path: Assets/Scenes/Result/Reward.unity
-    guid: ce7e06aa40c9f46418510c9ad71c463f
+    path: Assets/Scenes/Kelas Archimedes 2.unity
+    guid: b3630bf602c030f47805a9c3869aeda9
   - enabled: 1
-    path: Assets/Scenes/Result/Fail.unity
-    guid: e5e5aa34905e1cd4c92e593fd06be941
+    path: Assets/Scenes/Lapangan Archimedes 2.unity
+    guid: 3c541d09bb419db49a0e69fc6a16574f
   m_configObjects:
-    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 9c9cc16013d85a8459895fb67fbd9fe2, type: 2}
-    Unity.XR.OpenVR.Settings: {fileID: 11400000, guid: 38a1b10590bbff14694d38c827088d83, type: 2}
-    com.unity.addressableassets: {fileID: 11400000, guid: 137227762359a7b40971f25bb308806e, type: 2}
-    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 8aab7b1dda490e34c827c24917053705, type: 2}
-    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 0b46e38d1a9dbe94aa6be46176c4222c, type: 2}
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 9c9cc16013d85a8459895fb67fbd9fe2,
+      type: 2}
+    Unity.XR.OpenVR.Settings: {fileID: 11400000, guid: 38a1b10590bbff14694d38c827088d83,
+      type: 2}
+    WebXR.Settings: {fileID: 11400000, guid: fe9659bb224bb054bb1dbca065d1d318, type: 2}
+    com.unity.input.settings: {fileID: 11400000, guid: 7c0d65f8139523c47a3ac0b1587ccdf6,
+      type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: bc87842975b39e54c9a8257bb65aef55,
+      type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 0b46e38d1a9dbe94aa6be46176c4222c,
+      type: 2}
+    xr.sdk.mock-hmd.settings: {fileID: 11400000, guid: f0edd483e099c884298f53dd1cf91424,
+      type: 2}

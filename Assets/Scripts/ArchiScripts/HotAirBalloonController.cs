@@ -1,126 +1,152 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit; // Diperlukan untuk interaksi VR jika tombol adalah XR Interactable
+using BNG; // pakai tipe JoystickControl & Button
 
-public class HotAirBalloonController : MonoBehaviour
-{
-    // Objek Balon Udara yang posisinya akan diubah (biasanya transform ini sendiri)
-    [Header("Pengaturan Balon & Kontrol")]
-    [Tooltip("Posisi Y awal balon saat api padam.")]
-    public float initialYPosition; 
+public class HotAirBalloonController : MonoBehaviour {
 
-    [Tooltip("Kenaikan posisi Y per level api (misal: 1 meter)")]
-    public float heightIncreasePerLevel = 1.0f;
+    [Header("References")]
+    [Tooltip("Transform balon / basket yang akan digerakkan")]
+    public Transform balloonTransform;
 
-    [Tooltip("Kecepatan transisi pergerakan Y (interpolasi).")]
-    public float movementSpeed = 0.5f; 
+    [Tooltip("Joystick fisik yang mengontrol arah balon")]
+    public JoystickControl joystick;
 
-    // Level Api: 0 (Padam), 1 (Kecil), 2 (Sedang), 3 (Besar)
-    private int flameLevel = 0; 
-    
-    // Ketinggian target yang akan diinterpolasi oleh Update
-    private float targetYPosition;
+    [Tooltip("Button untuk menaikkan level api (Burn Up)")]
+    public Button burnUpButton;
 
-    // Komponen-komponen visual (Opsional: Seret objek Api Kecil, Api Sedang, Api Besar di Inspector)
-    [Header("Visual Api (Opsional)")]
-    public GameObject smallFlameVisual;
-    public GameObject mediumFlameVisual;
-    public GameObject largeFlameVisual;
+    [Tooltip("Button untuk menurunkan level api (Burn Down)")]
+    public Button burnDownButton;
 
-    void Start()
-    {
-        // Tetapkan posisi Y awal
-        initialYPosition = transform.position.y;
-        targetYPosition = initialYPosition;
-        
-        // Pastikan semua visual api mati saat dimulai
-        UpdateFlameVisuals();
+    [Header("Flame Objects")]
+    public GameObject apiKecil;
+    public GameObject apiSedang;
+    public GameObject apiBesar;
 
-        Debug.Log("Balon Udara Siap. Api level: " + flameLevel);
+    [Header("Ketinggian / Level Api (offset dari posisi awal)")]
+    public float offsetApiKecil = 2f;
+    public float offsetApiSedang = 5f;
+    public float offsetApiBesar = 10f;
+
+    [Header("Kecepatan Gerak Balon")]
+    public float verticalSpeed = 1.5f;
+    public float horizontalSpeed = 1.5f;
+
+    // 0 = api mati, 1 = kecil, 2 = sedang, 3 = besar
+    int currentLevel = 0;
+
+    float baseHeight;
+    float targetHeight;
+
+    // Input dari joystick (-1..1, -1..1)
+    Vector2 joystickInput = Vector2.zero;
+
+    void Awake() {
+        if (balloonTransform == null) {
+            balloonTransform = transform;
+        }
     }
 
-    void Update()
-    {
-        // Gerakkan balon ke target Y secara bertahap (interpolasi halus)
-        float newY = Mathf.Lerp(transform.position.y, targetYPosition, Time.deltaTime * movementSpeed);
-        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+    void Start() {
+        // Simpan tinggi awal
+        baseHeight = balloonTransform.position.y;
+
+        // Kondisi awal : api mati + balon di posisi awal
+        SetFireLevel(0);
+
+        // ====== DAFTARKAN EVENT KE JOYSTICK & BUTTON DI SINI ======
+        if (joystick != null) {
+            joystick.onJoystickVectorChange.AddListener(OnJoystickVectorChanged);
+        }
+
+        if (burnUpButton != null) {
+            burnUpButton.onButtonDown.AddListener(OnBurnUpPressed);
+        }
+
+        if (burnDownButton != null) {
+            burnDownButton.onButtonDown.AddListener(OnBurnDownPressed);
+        }
     }
 
-    // Dipanggil saat Tombol Hijau ditekan
-    public void IncreaseFlameLevel()
-    {
-        if (flameLevel < 3)
-        {
-            // Naikkan level api (Level 0 -> 1 -> 2 -> 3)
-            flameLevel++;
-            
-            // Perbarui ketinggian target
-            targetYPosition = initialYPosition + (flameLevel * heightIncreasePerLevel);
-            
-            Debug.Log("Level Api Naik ke: " + GetFlameName(flameLevel) + ". Target Y: " + targetYPosition);
+    void Update() {
+        if (balloonTransform == null) {
+            return;
         }
-        else
-        {
-            // Kondisi 4: Api Besar, Player tekan tombol hijau = tidak terjadi apa-apa
-            Debug.Log("Level Api sudah Maksimum (Besar).");
-        }
-        
-        UpdateFlameVisuals();
+
+        Vector3 pos = balloonTransform.position;
+
+        // --- Gerak vertikal (naik / turun) berdasarkan level api ---
+        pos.y = Mathf.Lerp(pos.y, targetHeight, Time.deltaTime * verticalSpeed);
+
+        // --- Gerak horizontal dari joystick ---
+        Vector3 horizontalMove =
+            new Vector3(joystickInput.x, 0f, joystickInput.y) *
+            horizontalSpeed * Time.deltaTime;
+
+        pos += horizontalMove;
+
+        balloonTransform.position = pos;
     }
 
-    // Dipanggil saat Tombol Merah ditekan
-    public void DecreaseFlameLevel()
-    {
-        if (flameLevel == 1)
-        {
-            // Kondisi 2: Api Kecil, Player tekan tombol merah = turun ke level padam/mati
-            flameLevel = 0; // Turun ke level Padam
-            
-            // Ketinggian kembali ke posisi semula (initialYPosition)
-            targetYPosition = initialYPosition; 
-            
-            Debug.Log("Level Api Turun ke: Padam. Target Y: " + targetYPosition);
-        }
-        else if (flameLevel > 1)
-        {
-            // Kondisi 3 (Sedang) dan Kondisi 4 (Besar), turun satu level
-            flameLevel--;
-            
-            // Ketinggian Y kurang 1
-            targetYPosition = initialYPosition + (flameLevel * heightIncreasePerLevel);
-            
-            Debug.Log("Level Api Turun ke: " + GetFlameName(flameLevel) + ". Target Y: " + targetYPosition);
-        }
-        else
-        {
-            // Kondisi 1: Api Mati (level 0), Player tekan tombol merah = tidak terjadi apa-apa
-            Debug.Log("Api sudah Padam. Tidak ada perubahan.");
-        }
+    // ===================== INPUT JOYSTICK ======================
 
-        UpdateFlameVisuals();
+    // Dipanggil ketika joystick berubah (via event di Start, bukan lewat Inspector)
+    public void OnJoystickVectorChanged(Vector2 value) {
+        joystickInput = value; // -1..1
     }
 
-    // Fungsi utilitas untuk memperbarui tampilan visual api
-    private void UpdateFlameVisuals()
-    {
-        bool small = (flameLevel == 1);
-        bool medium = (flameLevel == 2);
-        bool large = (flameLevel == 3);
+    // ===================== INPUT BUTTON ======================
 
-        if (smallFlameVisual != null) smallFlameVisual.SetActive(small);
-        if (mediumFlameVisual != null) mediumFlameVisual.SetActive(medium);
-        if (largeFlameVisual != null) largeFlameVisual.SetActive(large);
+    void OnBurnUpPressed() {
+        IncreaseFireLevel();
     }
 
-    // Fungsi utilitas untuk debugging
-    private string GetFlameName(int level)
-    {
-        switch (level)
-        {
-            case 0: return "Padam";
-            case 1: return "Kecil";
-            case 2: return "Sedang";
-            case 3: return "Besar";
-            default: return "Error";
+    void OnBurnDownPressed() {
+        DecreaseFireLevel();
+    }
+
+    public void IncreaseFireLevel() {
+        currentLevel++;
+        if (currentLevel > 3) currentLevel = 3;
+
+        SetLevelHeight(currentLevel);
+        UpdateFlameVisual();
+    }
+
+    public void DecreaseFireLevel() {
+        currentLevel--;
+        if (currentLevel < 0) currentLevel = 0;
+
+        SetLevelHeight(currentLevel);
+        UpdateFlameVisual();
+    }
+
+    void SetLevelHeight(int level) {
+        switch (level) {
+            case 0:
+                targetHeight = baseHeight;
+                break;
+            case 1:
+                targetHeight = baseHeight + offsetApiKecil;
+                break;
+            case 2:
+                targetHeight = baseHeight + offsetApiSedang;
+                break;
+            case 3:
+                targetHeight = baseHeight + offsetApiBesar;
+                break;
         }
+    }
+
+    void UpdateFlameVisual() {
+        if (apiKecil != null)  apiKecil.SetActive(currentLevel == 1);
+        if (apiSedang != null) apiSedang.SetActive(currentLevel == 2);
+        if (apiBesar != null)  apiBesar.SetActive(currentLevel == 3);
+    }
+
+    void SetFireLevel(int level) {
+        currentLevel = level;
+        SetLevelHeight(level);
+        UpdateFlameVisual();
     }
 }
