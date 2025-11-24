@@ -18,7 +18,8 @@ namespace BNG {
 
         [Header("Steering Grabbable")]
         [Tooltip("Jika true dan SteeringGrabbable sedang dipegang, trigger kanan / kiri menjadi input gas / rem.")]
-        public bool CheckTriggerInput = true;
+        // UNTUK MODE TOMBOL: biar tidak bentrok, default = false.
+        public bool CheckTriggerInput = false;
         public Grabbable SteeringGrabbable;
 
         [Header("Engine Status")]
@@ -47,7 +48,7 @@ namespace BNG {
         [HideInInspector]
         public float SteeringAngle = 0f;   // -1 s/d 1 (dari SteeringWheel)
         [HideInInspector]
-        public float MotorInput = 0f;      // -1 s/d 1 (dari trigger / input lain)
+        public float MotorInput = 0f;      // -1 s/d 1 (dari tombol / trigger)
         [HideInInspector]
         public float CurrentSpeed;         // km/jam
 
@@ -64,7 +65,6 @@ namespace BNG {
             initialPosition = transform.position;
 
             // Nilai drag awal agar gerak kapal lebih "berat" seperti di air.
-            // Silakan disesuaikan di Inspector kalau terlalu lambat / cepat.
             if (rb != null) {
                 if (rb.drag < 1f) rb.drag = 1.5f;
                 if (rb.angularDrag < 1f) rb.angularDrag = 2f;
@@ -75,7 +75,7 @@ namespace BNG {
 
             isHoldingSteering = SteeringGrabbable != null && SteeringGrabbable.BeingHeld;
 
-            // Input gas / rem dari trigger kalau diaktifkan
+            // Kalau mau pakai trigger untuk gas, centang CheckTriggerInput di Inspector
             if (CheckTriggerInput) {
                 GetTorqueInputFromTriggers();
             }
@@ -101,7 +101,7 @@ namespace BNG {
             wasHoldingSteering = isHoldingSteering;
         }
 
-        // Dipanggil saat ingin menyalakan mesin
+        // Dipanggil saat ingin menyalakan mesin (misalnya dari tombol)
         public virtual void CrankEngine() {
             if (crankingEngine || EngineOn) {
                 return;
@@ -143,12 +143,11 @@ namespace BNG {
             }
         }
 
-        // Right Trigger = gas, Left Trigger = rem / mundur
+        // Right Trigger = gas, Left Trigger = rem / mundur (opsional)
         public virtual void GetTorqueInputFromTriggers() {
             if (isHoldingSteering) {
                 SetMotorTorqueInput(InputBridge.Instance.RightTrigger - InputBridge.Instance.LeftTrigger);
             }
-            // Kalau tadinya pegang stir lalu dilepas → hentikan input gas
             else if (wasHoldingSteering && !isHoldingSteering) {
                 SetMotorTorqueInput(0);
             }
@@ -171,7 +170,7 @@ namespace BNG {
         protected virtual void ApplyBoatMovement() {
 
             if (!EngineOn) {
-                // Mesin mati → tidak ada dorong (boleh tetap meluncur karena inertia)
+                // Mesin mati → tidak ada dorong (tetap bisa meluncur karena inertia)
                 return;
             }
 
@@ -183,14 +182,9 @@ namespace BNG {
                 rb.AddForce(forwardForce, ForceMode.Acceleration);
             }
 
-            // ------- PUTAR / BEL0K -------
-            // Hanya belok kalau ada sedikit input atau masih ada kecepatan
+            // ------- PUTAR / BELOK -------
             if (Mathf.Abs(SteeringAngle) > 0.01f && rb.velocity.magnitude > 0.01f) {
-
-                // turnPower menentukan seberapa cepat kapal memutar yaw
                 float turnPower = SteeringAngle * MaxSteeringAngle;
-
-                // Tambahkan torsi di sumbu Y (atas)
                 rb.AddTorque(Vector3.up * turnPower, ForceMode.Acceleration);
             }
         }
@@ -212,7 +206,7 @@ namespace BNG {
             SteeringAngle = -steeringAngle.x;
         }
 
-        // Dipanggil oleh trigger / input lain
+        // Dipanggil oleh tombol / input lain
         public virtual void SetMotorTorqueInput(float input) {
             MotorInput = Mathf.Clamp(input, -1f, 1f);
         }
@@ -248,6 +242,17 @@ namespace BNG {
 
         float correctValue(float inputValue) {
             return (float)System.Math.Round(inputValue * 1000f) / 1000f;
+        }
+
+        /// <summary>
+        /// Opsional: berhentikan kapal seketika saat mesin dimatikan.
+        /// </summary>
+        public void StopBoatCompletely() {
+            SetMotorTorqueInput(0f);
+            if (rb != null) {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
         }
     }
 }

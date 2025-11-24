@@ -318,7 +318,7 @@ PrefabInstance:
     - target: {fileID: 8776156598604232746, guid: 258b699f785bafb4690af87248daf3ce,
         type: 3}
       propertyPath: TrackingOrigin
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9004910789225949109, guid: 258b699f785bafb4690af87248daf3ce,
         type: 3}
@@ -812,7 +812,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1280949336}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e0cb9aa70a22847b5925ee5f067c10a9, type: 3}
   m_Name: 

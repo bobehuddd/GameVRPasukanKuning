@@ -28,7 +28,7 @@ public class SimpleUITrigger : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         // Asumsi tag Player VR adalah "VRPlayer" atau "Player"
-        if (other.CompareTag("VRPlayer") || other.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
             if (targetUI != null && !targetUI.activeInHierarchy)
             {
